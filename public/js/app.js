@@ -299,11 +299,23 @@ async function handleFileComplaint(e) {
   const category = document.getElementById('complaint-category').value.trim();
   const description = document.getElementById('complaint-desc').value.trim();
   const ward = document.getElementById('complaint-ward').value;
+  const area = document.getElementById('complaint-area')?.value?.trim() || ward;
   const priority = document.getElementById('complaint-priority').value;
   const address = document.getElementById('complaint-address').value.trim();
   const departmentId = document.getElementById('complaint-dept-select').value;
 
-  const payload = { category, description, ward, priority, address };
+  if (description.length < 10) {
+    return showToast('Description must be at least 10 characters long', 'error');
+  }
+
+  const payload = { 
+    category, 
+    description, 
+    ward, 
+    area, 
+    priority, 
+    location: { address } 
+  };
   if (departmentId) payload.departmentId = departmentId;
 
   try {
@@ -315,11 +327,16 @@ async function handleFileComplaint(e) {
     const data = await res.json();
 
     if (data.success) {
-      showToast(`Complaint filed! Code: ${data.data.referenceCode}`, 'success');
+      const refCode = data.data?.complaint?.referenceCode || data.data?.referenceCode || 'Submitted';
+      showToast(`Complaint filed! Ref: ${refCode}`, 'success');
       e.target.reset();
       loadMyComplaints();
     } else {
-      showToast(data.message || 'Failed to file complaint', 'error');
+      let errMsg = data.message || 'Failed to file complaint';
+      if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+        errMsg = data.errors.map(err => err.msg || err.message).join(' | ');
+      }
+      showToast(errMsg, 'error');
     }
   } catch (err) {
     showToast('Network error while filing complaint', 'error');
@@ -331,14 +348,15 @@ async function loadMyComplaints() {
   container.innerHTML = '<p class="text-center py-6 text-gray-500">Loading complaints...</p>';
 
   try {
-    const res = await fetch(`${API_BASE}/complaints/my-complaints`, {
+    const res = await fetch(`${API_BASE}/complaints/my`, {
       headers: getAuthHeaders()
     });
     const data = await res.json();
 
     if (data.success) {
-      state.myComplaints = data.data;
-      renderMyComplaintsList(data.data, container);
+      const list = data.data?.complaints || data.data || [];
+      state.myComplaints = list;
+      renderMyComplaintsList(list, container);
     } else {
       container.innerHTML = `<p class="text-red-500 p-4">${data.message}</p>`;
     }
