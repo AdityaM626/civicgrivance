@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Municipal Civic Complaint & Grievance Management System</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/styles.css">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col antialiased text-slate-900">
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Header / Navigation -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Brand / Logo -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('public')">
+          <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-md shadow-blue-200">
+            P20
+          </div>
+          <div>
+            <h1 class="font-bold text-slate-900 leading-tight">Municipal Civic Grievance</h1>
+            <p class="text-xs text-slate-500 font-medium">City Public Services & Escalation Portal</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex space-x-1 h-full pt-2">
+          <button id="tab-public" class="nav-tab px-4 h-full border-b-2 font-semibold text-sm transition border-blue-600 text-blue-600">
+            Public Lookup
+          </button>
+          <button id="tab-citizen" class="nav-tab hidden px-4 h-full border-b-2 font-semibold text-sm transition border-transparent text-gray-500 hover:text-gray-700">
+            Citizen Portal
+          </button>
+          <button id="tab-officer" class="nav-tab hidden px-4 h-full border-b-2 font-semibold text-sm transition border-transparent text-gray-500 hover:text-gray-700">
+            Department Queue
+          </button>
+          <button id="tab-admin" class="nav-tab hidden px-4 h-full border-b-2 font-semibold text-sm transition border-transparent text-gray-500 hover:text-gray-700">
+            Admin Reports
+          </button>
+        </nav>
+
+        <!-- Auth / User Actions -->
+        <div class="flex items-center gap-3">
+          <div id="guest-actions">
+            <button id="btn-open-login" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm shadow-blue-200 transition">
+              Sign In / Register
+            </button>
+          </div>
+
+          <div id="user-actions" class="hidden items-center gap-3">
+            <div class="text-right hidden sm:block">
+              <p id="user-name-display" class="text-sm font-bold text-slate-900 leading-tight">User</p>
+              <span id="user-role-display" class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-bold uppercase tracking-wider">CITIZEN</span>
+            </div>
+            <button id="btn-logout" class="px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-50 transition">
+              Logout
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- 1. PUBLIC COMPLAINT LOOKUP VIEW -->
+    <section id="view-public" class="view-section space-y-8">
+      
+      <!-- Hero Banner -->
+      <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden">
+        <div class="max-w-2xl relative z-10 space-y-4">
+          <span class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold tracking-wider uppercase">Public Service Status</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Track Your Civic Grievance Status Live</h2>
+          <p class="text-blue-100 text-sm sm:text-base">Enter your unique complaint reference code (e.g. <code>CMP-20260904-890A</code>) to check live status, assigned department, SLA due date, and audit timeline.</p>
+          
+          <form id="form-public-search" class="flex flex-col sm:flex-row gap-3 pt-2">
+            <input type="text" id="public-search-code" placeholder="Enter Reference Code (e.g. CMP-20260904-890A)" required class="flex-1 px-4 py-3.5 rounded-xl text-slate-900 placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-white">
+            <button type="submit" class="px-6 py-3.5 bg-slate-900 hover:bg-black text-white font-bold text-sm rounded-xl transition shadow-lg">
+              Lookup Status
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Public Lookup Result Container -->
+      <div id="public-lookup-result" class="max-w-3xl mx-auto">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+
+    <!-- 2. CITIZEN PORTAL VIEW -->
+    <section id="view-citizen" class="view-section hidden space-y-8">
+      
+      <!-- File Grievance Card -->
+      <div class="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <h3 class="text-xl font-bold text-slate-900">File a New Civic Grievance</h3>
+          <p class="text-sm text-slate-500">Submit your civic issue for automatic department routing & SLA tracking.</p>
+        </div>
+
+        <form id="form-file-complaint" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Category</label>
+            <input type="text" id="complaint-category" placeholder="e.g. Water Leakage, Pothole, Streetlight" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Ward Number</label>
+            <select id="complaint-ward" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+              <option value="WARD-1">Ward 1</option>
+              <option value="WARD-2">Ward 2</option>
+              <option value="WARD-5">Ward 5</option>
+              <option value="WARD-10">Ward 10</option>
+              <option value="WARD-15">Ward 15</option>
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Priority Level</label>
+            <select id="complaint-priority" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+              <option value="LOW">LOW (SLA: 72 hrs)</option>
+              <option value="MEDIUM" selected>MEDIUM (SLA: 48 hrs)</option>
+              <option value="HIGH">HIGH (SLA: 24 hrs)</option>
+              <option value="CRITICAL">CRITICAL (SLA: 12 hrs)</option>
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Department (Optional Auto-Route)</label>
+            <select id="complaint-dept-select" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+              <!-- Populated via API -->
+            </select>
+          </div>
+
+          <div class="sm:col-span-2 space-y-2">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Address / Landmark</label>
+            <input type="text" id="complaint-address" placeholder="e.g. Near City Park Gate 2, Main Street" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+          </div>
+
+          <div class="sm:col-span-2 space-y-2">
+            <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Detailed Description</label>
+            <textarea id="complaint-desc" rows="3" placeholder="Provide details about the issue..." required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none"></textarea>
+          </div>
+
+          <div class="sm:col-span-2 flex justify-end">
+            <button type="submit" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition">
+              Submit Complaint
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- My Complaints Dashboard -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold text-slate-900">My Complaints History</h3>
+          <button onclick="loadMyComplaints()" class="text-xs font-semibold text-blue-600 hover:underline">Refresh List</button>
+        </div>
+        <div id="my-complaints-list" class="space-y-4">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+
+    <!-- 3. OFFICER PORTAL VIEW -->
+    <section id="view-officer" class="view-section hidden space-y-8">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900">Officer Department Queue</h2>
+          <p class="text-sm text-slate-500">Manage and resolve assigned civic complaints.</p>
+        </div>
+        <button onclick="loadOfficerQueue()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg transition">
+          Refresh Queue
+        </button>
+      </div>
+
+      <div id="officer-queue-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+
+    <!-- 4. ADMIN REPORTS VIEW -->
+    <section id="view-admin" class="view-section hidden space-y-8">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900">Admin Performance & SLA Analytics</h2>
+        <p class="text-sm text-slate-500">System-wide monitoring dashboard.</p>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Filed</p>
+          <h3 id="stat-total" class="text-3xl font-black text-slate-900 mt-2">0</h3>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Resolved</p>
+          <h3 id="stat-resolved" class="text-3xl font-black text-emerald-600 mt-2">0</h3>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-bold text-amber-600 uppercase tracking-wider">In Progress / Active</p>
+          <h3 id="stat-pending" class="text-3xl font-black text-amber-600 mt-2">0</h3>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-bold text-red-600 uppercase tracking-wider">SLA Breached</p>
+          <h3 id="stat-breached" class="text-3xl font-black text-red-600 mt-2">0</h3>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- AUTH MODAL -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <h3 class="text-xl font-bold text-slate-900">Sign In to Civic Portal</h3>
+        <button onclick="closeModal('auth-modal')" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+      </div>
+
+      <!-- Auth Form -->
+      <form id="form-login" class="space-y-4">
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-slate-700">Email Address</label>
+          <input type="email" id="login-email" required placeholder="user@example.com" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-slate-700">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+        </div>
+        <button type="submit" class="w-full py-3 bg-blue-600 text-white font-bold text-sm rounded-xl shadow-md hover:bg-blue-700 transition">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Toggle to Register -->
+      <div class="border-t border-slate-100 pt-4 text-center">
+        <p class="text-xs text-slate-500">Need an account? Enter details below to register:</p>
+        <form id="form-register" class="space-y-3 mt-3 text-left">
+          <input type="text" id="reg-name" placeholder="Full Name" required class="w-full px-3 py-2 rounded border border-slate-300 text-xs">
+          <input type="email" id="reg-email" placeholder="Email Address" required class="w-full px-3 py-2 rounded border border-slate-300 text-xs">
+          <input type="password" id="reg-password" placeholder="Password (min 6 chars)" required class="w-full px-3 py-2 rounded border border-slate-300 text-xs">
+          <input type="text" id="reg-phone" placeholder="Phone Number" required class="w-full px-3 py-2 rounded border border-slate-300 text-xs">
+          <select id="reg-role" class="w-full px-3 py-2 rounded border border-slate-300 text-xs font-semibold">
+            <option value="CITIZEN">Role: CITIZEN</option>
+            <option value="OFFICER">Role: OFFICER</option>
+            <option value="ADMIN">Role: ADMIN</option>
+          </select>
+          <button type="submit" class="w-full py-2 bg-slate-900 text-white font-bold text-xs rounded hover:bg-black transition">
+            Register New Account
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- RESOLVE MODAL -->
+  <div id="resolve-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 class="text-lg font-bold text-slate-900">Submit Resolution Proof</h3>
+      <form id="form-resolve" class="space-y-4">
+        <div>
+          <label class="text-xs font-bold text-slate-700">Resolution Notes</label>
+          <textarea id="resolve-notes" rows="3" required placeholder="Describe work completed..." class="w-full p-3 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"></textarea>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-700">Proof Photo URLs (Comma-separated)</label>
+          <input type="text" id="resolve-photos" placeholder="https://example.com/photo1.jpg" class="w-full p-2.5 rounded-lg border border-slate-300 text-sm">
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeModal('resolve-modal')" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg shadow">Mark Resolved</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FEEDBACK MODAL -->
+  <div id="feedback-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 class="text-lg font-bold text-slate-900">Rate & Review Resolution</h3>
+      <form id="form-feedback" class="space-y-4">
+        <div>
+          <label class="text-xs font-bold text-slate-700">Rating (1 to 5 Stars)</label>
+          <select id="feedback-rating" required class="w-full p-2.5 rounded-lg border border-slate-300 text-sm font-bold">
+            <option value="5">⭐⭐⭐⭐⭐ 5 - Excellent</option>
+            <option value="4">⭐⭐⭐⭐ 4 - Good</option>
+            <option value="3">⭐⭐⭐ 3 - Average</option>
+            <option value="2">⭐⭐ 2 - Poor</option>
+            <option value="1">⭐ 1 - Very Poor</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-700">Comments</label>
+          <textarea id="feedback-comment" rows="2" placeholder="Optional comments..." class="w-full p-3 rounded-lg border border-slate-300 text-sm"></textarea>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeModal('feedback-modal')" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg shadow">Submit Rating</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- REOPEN MODAL -->
+  <div id="reopen-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 class="text-lg font-bold text-slate-900">Reopen Complaint</h3>
+      <form id="form-reopen" class="space-y-4">
+        <div>
+          <label class="text-xs font-bold text-slate-700">Reason for Reopening</label>
+          <textarea id="reopen-reason" rows="3" required placeholder="Explain why the resolution was unsatisfactory..." class="w-full p-3 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-amber-600 focus:outline-none"></textarea>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeModal('reopen-modal')" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-lg shadow">Reopen Issue</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Client Script -->
+  <script src="/js/app.js"></script>
+
+</body>
+</html>
