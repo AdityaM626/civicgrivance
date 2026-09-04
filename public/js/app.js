@@ -13,7 +13,14 @@ const state = {
   currentView: 'public',
   myComplaints: [],
   officerQueue: [],
-  activeComplaint: null
+  activeComplaintId: null
+};
+
+// Demo Account Credentials for 1-Click Login
+const DEMO_ACCOUNTS = {
+  CITIZEN: { email: 'citizen@example.com', password: 'Citizen123!' },
+  OFFICER: { email: 'officer@example.com', password: 'Officer123!' },
+  ADMIN:   { email: 'admin@example.com',   password: 'Admin123!' }
 };
 
 // --- Initialization ---
@@ -29,6 +36,46 @@ async function initApp() {
   // Handle URL hash or default tab
   const hash = window.location.hash.replace('#', '') || 'public';
   switchView(hash);
+}
+
+// --- 1-Click Demo Login Helper ---
+async function demoLogin(role) {
+  const creds = DEMO_ACCOUNTS[role];
+  if (!creds) return;
+
+  showToast(`Logging in as ${role}...`, 'info');
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(creds)
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      saveSession(data.data.token, data.data.user);
+      closeModal('auth-modal');
+      showToast(`Logged in cleanly as ${data.data.user.name} (${role})!`, 'success');
+      
+      if (role === 'CITIZEN') switchView('citizen');
+      else if (role === 'OFFICER') switchView('officer');
+      else if (role === 'ADMIN') switchView('admin');
+    } else {
+      showToast(data.message || 'Demo login failed', 'error');
+    }
+  } catch (err) {
+    showToast('Failed to connect to backend server', 'error');
+  }
+}
+
+// --- Fill Sample Reference Code Helper ---
+function fillSampleCode(code) {
+  const input = document.getElementById('public-search-code');
+  if (input) {
+    input.value = code;
+    performPublicLookup();
+  }
 }
 
 // --- Auth Utilities ---
@@ -137,6 +184,7 @@ function switchView(viewName) {
 // --- Toast Notifications ---
 function showToast(message, type = 'info') {
   const container = document.getElementById('toast-container');
+  if (!container) return;
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.innerHTML = `<span>${message}</span>`;
@@ -163,7 +211,7 @@ function populateDepartmentSelects() {
   const catSelect = document.getElementById('complaint-category-select');
 
   if (deptSelect) {
-    deptSelect.innerHTML = '<option value="">-- Auto Route by Category --</option>';
+    deptSelect.innerHTML = '<option value="">-- Auto-Detect Department by Category --</option>';
     state.departments.forEach(d => {
       const opt = document.createElement('option');
       opt.value = d._id;
@@ -182,7 +230,7 @@ function populateDepartmentSelects() {
           if (c.isActive) {
             const opt = document.createElement('option');
             opt.value = c.name;
-            opt.textContent = `${c.name} (${c.slaHours}h SLA)`;
+            opt.textContent = `${c.name} (${c.slaHours}h SLA - ${d.name})`;
             group.appendChild(opt);
           }
         });
@@ -199,7 +247,7 @@ async function performPublicLookup(e) {
   if (!input) return showToast('Please enter a complaint reference code', 'error');
 
   const resultContainer = document.getElementById('public-lookup-result');
-  resultContainer.innerHTML = `<div class="p-8 text-center text-gray-500">Searching...</div>`;
+  resultContainer.innerHTML = `<div class="p-8 text-center text-gray-500 font-medium">Searching live database for reference code: <code>${input}</code>...</div>`;
 
   try {
     const res = await fetch(`${API_BASE}/public/complaints/${encodeURIComponent(input)}`);
@@ -207,8 +255,9 @@ async function performPublicLookup(e) {
 
     if (!data.success) {
       resultContainer.innerHTML = `
-        <div class="p-8 text-center text-red-500 bg-red-50 rounded-xl border border-red-200">
-          <p class="font-semibold">${data.message || 'Complaint code not found'}</p>
+        <div class="p-8 text-center text-red-600 bg-red-50 rounded-2xl border border-red-200">
+          <p class="font-bold text-lg">${data.message || 'Complaint reference code not found'}</p>
+          <p class="text-xs text-red-500 mt-1">Please verify the reference code (e.g. CIV-2026-000070) or file a new complaint.</p>
         </div>`;
       return;
     }
@@ -225,7 +274,7 @@ function renderPublicComplaintDetails(c, container) {
       ${idx < c.timeline.length - 1 ? '<div class="timeline-line"></div>' : ''}
       <div class="timeline-dot ${idx === 0 ? 'active' : ''} mt-1"></div>
       <div>
-        <span class="px-2 py-0.5 text-xs font-medium rounded badge-${t.status}">${t.statusLabel}</span>
+        <span class="px-2 py-0.5 text-xs font-semibold rounded badge-${t.status}">${t.statusLabel}</span>
         <p class="text-sm font-medium text-gray-900 mt-1">${t.note || t.statusDescription}</p>
         <p class="text-xs text-gray-400">${new Date(t.timestamp).toLocaleString()}</p>
       </div>
@@ -233,26 +282,26 @@ function renderPublicComplaintDetails(c, container) {
   `).join('');
 
   container.innerHTML = `
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-4">
+    <div class="bg-white rounded-3xl shadow-lg border border-slate-200 p-6 sm:p-8 space-y-6">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider">Public Track</span>
-          <h2 class="text-2xl font-bold text-gray-900">${c.referenceCode}</h2>
+          <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Verified Public Record</span>
+          <h2 class="text-2xl font-black text-slate-900">${c.referenceCode}</h2>
         </div>
         <div class="flex items-center gap-2">
-          <span class="px-3 py-1 rounded-full text-sm font-semibold badge-${c.status}">${c.statusLabel}</span>
-          <span class="px-3 py-1 rounded-full text-xs font-medium badge-priority-${c.priority}">${c.priority} Priority</span>
+          <span class="px-3.5 py-1.5 rounded-full text-xs font-bold badge-${c.status}">${c.statusLabel}</span>
+          <span class="px-3 py-1 rounded-full text-xs font-bold badge-priority-${c.priority}">${c.priority} Priority</span>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl text-sm">
-        <div><span class="text-gray-500">Category:</span> <p class="font-semibold">${c.category}</p></div>
-        <div><span class="text-gray-500">Department:</span> <p class="font-semibold">${c.department?.name || 'Unassigned'}</p></div>
-        <div><span class="text-gray-500">Ward:</span> <p class="font-semibold">${c.ward}</p></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl text-sm">
+        <div><span class="text-xs text-gray-400 uppercase font-bold">Category</span> <p class="font-bold text-slate-900">${c.category}</p></div>
+        <div><span class="text-xs text-gray-400 uppercase font-bold">Department</span> <p class="font-bold text-slate-900">${c.department?.name || 'Assigned'}</p></div>
+        <div><span class="text-xs text-gray-400 uppercase font-bold">Ward Location</span> <p class="font-bold text-slate-900">${c.ward}</p></div>
       </div>
 
       <div>
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Status Timeline</p>
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Status Timeline Audit Trail</p>
         <div class="pl-2 pt-2">${timelineHTML || '<p class="text-sm text-gray-500">No timeline entries.</p>'}</div>
       </div>
     </div>`;
@@ -319,11 +368,8 @@ async function handleFileComplaint(e) {
   e.preventDefault();
   const selectedCat = document.getElementById('complaint-category-select')?.value;
   const inputCat = document.getElementById('complaint-category')?.value?.trim();
-  const category = selectedCat || inputCat;
+  const category = selectedCat || inputCat || 'Pothole Repair';
   
-  if (!category) {
-    return showToast('Please select or type a complaint category', 'error');
-  }
   const description = document.getElementById('complaint-desc').value.trim();
   const ward = document.getElementById('complaint-ward').value;
   const area = document.getElementById('complaint-area')?.value?.trim() || ward;
@@ -355,8 +401,7 @@ async function handleFileComplaint(e) {
 
     if (data.success) {
       const refCode = data.data?.complaint?.referenceCode || data.data?.referenceCode || 'Submitted';
-      showToast(`Complaint filed! Ref: ${refCode}`, 'success');
-      e.target.reset();
+      showToast(`🎉 Complaint filed successfully! Reference Code: ${refCode}`, 'success');
       loadMyComplaints();
     } else {
       let errMsg = data.message || 'Failed to file complaint';
@@ -372,7 +417,7 @@ async function handleFileComplaint(e) {
 
 async function loadMyComplaints() {
   const container = document.getElementById('my-complaints-list');
-  container.innerHTML = '<p class="text-center py-6 text-gray-500">Loading complaints...</p>';
+  container.innerHTML = '<p class="text-center py-6 text-gray-500 font-medium">Loading your filed complaints...</p>';
 
   try {
     const res = await fetch(`${API_BASE}/complaints/my`, {
@@ -395,35 +440,39 @@ async function loadMyComplaints() {
 function renderMyComplaintsList(list, container) {
   if (!list.length) {
     container.innerHTML = `
-      <div class="bg-white rounded-xl p-8 text-center text-gray-500 border border-gray-100">
-        You have not filed any grievances yet. Use the form above to submit one.
+      <div class="bg-white rounded-2xl p-8 text-center text-slate-500 border border-slate-200">
+        You have not filed any grievances yet. Use the form above to submit one!
       </div>`;
     return;
   }
 
   container.innerHTML = list.map(c => `
-    <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
-          <span class="text-xs font-bold text-gray-400 uppercase">REF: ${c.referenceCode}</span>
-          <h3 class="text-lg font-bold text-gray-900">${c.category}</h3>
+          <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">REF: ${c.referenceCode}</span>
+          <h3 class="text-lg font-bold text-slate-900">${c.category}</h3>
         </div>
         <div class="flex items-center gap-2">
-          <span class="px-3 py-1 rounded-full text-xs font-semibold badge-${c.status}">${c.status}</span>
-          <span class="px-2 py-0.5 rounded text-xs badge-priority-${c.priority}">${c.priority}</span>
+          <span class="px-3 py-1 rounded-full text-xs font-bold badge-${c.status}">${c.status}</span>
+          <span class="px-2.5 py-0.5 rounded text-xs font-bold badge-priority-${c.priority}">${c.priority}</span>
         </div>
       </div>
-      <p class="text-sm text-gray-700">${c.description}</p>
-      <div class="flex flex-wrap items-center justify-between text-xs text-gray-500 pt-2">
-        <span>Ward: <strong>${c.ward}</strong> | Dept: <strong>${c.department?.name || 'Routed'}</strong></span>
+      <p class="text-sm text-slate-700 leading-relaxed">${c.description}</p>
+      <div class="flex flex-wrap items-center justify-between text-xs text-slate-500 pt-1 bg-slate-50 p-3 rounded-xl">
+        <span>Ward: <strong>${c.ward}</strong> (${c.area || 'Central'}) | Dept: <strong>${c.department?.name || 'Routed'}</strong></span>
         <span>Filed: ${new Date(c.createdAt).toLocaleDateString()}</span>
       </div>
       
       <!-- Action Buttons -->
-      <div class="flex gap-2 pt-2 border-t border-gray-100">
+      <div class="flex gap-2 pt-2 border-t border-slate-100">
         ${c.status === 'RESOLVED' ? `
-          <button onclick="openFeedbackModal('${c._id}')" class="px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs rounded-lg transition">Submit Feedback</button>
-          <button onclick="openReopenModal('${c._id}')" class="px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-medium text-xs rounded-lg transition">Reopen Issue</button>
+          <button onclick="openFeedbackModal('${c.id || c._id}')" class="px-3.5 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs rounded-lg transition flex items-center gap-1">
+            ⭐ Submit Rating & Feedback
+          </button>
+          <button onclick="openReopenModal('${c.id || c._id}')" class="px-3.5 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-xs rounded-lg transition flex items-center gap-1">
+            ⚠️ Reopen Issue
+          </button>
         ` : ''}
       </div>
     </div>
@@ -433,7 +482,7 @@ function renderMyComplaintsList(list, container) {
 // --- 4. Officer Actions ---
 async function loadOfficerQueue() {
   const container = document.getElementById('officer-queue-list');
-  container.innerHTML = '<p class="text-center py-6 text-gray-500">Loading department queue...</p>';
+  container.innerHTML = '<p class="text-center py-6 text-gray-500 font-medium">Loading department work queue...</p>';
 
   try {
     const res = await fetch(`${API_BASE}/officer/complaints`, {
@@ -455,25 +504,34 @@ async function loadOfficerQueue() {
 
 function renderOfficerQueue(list, container) {
   if (!list.length) {
-    container.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-gray-500">No assigned complaints in queue.</div>`;
+    container.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 col-span-2">No active complaints in your department queue right now.</div>`;
     return;
   }
 
   container.innerHTML = list.map(c => `
-    <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm space-y-3">
+    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
       <div class="flex items-center justify-between">
-        <span class="text-xs font-mono text-gray-500">${c.referenceCode}</span>
-        <span class="px-2.5 py-0.5 rounded text-xs font-semibold badge-${c.status}">${c.status}</span>
+        <span class="text-xs font-mono font-bold text-slate-500">${c.referenceCode}</span>
+        <span class="px-3 py-1 rounded-full text-xs font-bold badge-${c.status}">${c.status}</span>
       </div>
-      <h4 class="font-bold text-gray-900">${c.category} (Ward: ${c.ward})</h4>
-      <p class="text-sm text-gray-600">${c.description}</p>
+      <h4 class="font-bold text-slate-900 text-base">${c.category} (${c.ward})</h4>
+      <p class="text-sm text-slate-600 leading-relaxed">${c.description}</p>
       
+      <div class="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl flex justify-between">
+        <span>Area: <strong>${c.area || 'Main'}</strong></span>
+        <span>Priority: <strong class="badge-priority-${c.priority}">${c.priority}</strong></span>
+      </div>
+
       <div class="flex gap-2 pt-2">
-        ${c.status === 'ASSIGNED' ? `
-          <button onclick="updateComplaintStatus('${c._id}', 'IN_PROGRESS')" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-md">Start Progress</button>
+        ${c.status === 'FILED' || c.status === 'ASSIGNED' ? `
+          <button onclick="updateComplaintStatus('${c._id || c.id}', 'IN_PROGRESS')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow transition">
+            ▶️ Start Progress
+          </button>
         ` : ''}
         ${['ASSIGNED', 'IN_PROGRESS', 'REOPENED'].includes(c.status) ? `
-          <button onclick="openResolveModal('${c._id}')" class="px-3 py-1 bg-emerald-600 text-white text-xs font-semibold rounded-md">Submit Resolution</button>
+          <button onclick="openResolveModal('${c._id || c.id}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition">
+            ✅ Mark Resolved & Attach Proof
+          </button>
         ` : ''}
       </div>
     </div>
@@ -485,14 +543,14 @@ async function updateComplaintStatus(complaintId, newStatus) {
     const res = await fetch(`${API_BASE}/complaints/${complaintId}/status`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ status: newStatus, note: `Status changed to ${newStatus}` })
+      body: JSON.stringify({ status: newStatus, note: `Status updated to ${newStatus}` })
     });
     const data = await res.json();
     if (data.success) {
       showToast(`Complaint status updated to ${newStatus}`, 'success');
       loadOfficerQueue();
     } else {
-      showToast(data.message, 'error');
+      showToast(data.message || 'Status update failed', 'error');
     }
   } catch (err) {
     showToast('Failed to update status', 'error');
@@ -544,7 +602,8 @@ function openReopenModal(id) {
 async function submitResolution(e) {
   e.preventDefault();
   const notes = document.getElementById('resolve-notes').value.trim();
-  const photos = document.getElementById('resolve-photos').value.split(',').map(s => s.trim()).filter(Boolean);
+  const photosInput = document.getElementById('resolve-photos').value;
+  const photos = photosInput ? photosInput.split(',').map(s => s.trim()).filter(Boolean) : [];
 
   try {
     const res = await fetch(`${API_BASE}/complaints/${state.activeComplaintId}/resolve`, {
@@ -558,7 +617,7 @@ async function submitResolution(e) {
       closeModal('resolve-modal');
       loadOfficerQueue();
     } else {
-      showToast(data.message, 'error');
+      showToast(data.message || 'Failed to submit resolution', 'error');
     }
   } catch (err) {
     showToast('Failed to submit resolution', 'error');
@@ -578,11 +637,11 @@ async function submitFeedbackForm(e) {
     });
     const data = await res.json();
     if (data.success) {
-      showToast('Thank you for your feedback!', 'success');
+      showToast('Thank you for rating our service!', 'success');
       closeModal('feedback-modal');
       loadMyComplaints();
     } else {
-      showToast(data.message, 'error');
+      showToast(data.message || 'Feedback submission failed', 'error');
     }
   } catch (err) {
     showToast('Failed to submit feedback', 'error');
@@ -605,7 +664,7 @@ async function submitReopenForm(e) {
       closeModal('reopen-modal');
       loadMyComplaints();
     } else {
-      showToast(data.message, 'error');
+      showToast(data.message || 'Reopen request failed', 'error');
     }
   } catch (err) {
     showToast('Failed to reopen complaint', 'error');
