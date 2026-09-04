@@ -197,7 +197,7 @@ municipal-civic-grievance/
 │   │   └── index.js                    # API v1 Central router
 │   │
 │   ├── middleware/
-│   │   ├── auth.middleware.js          # JWT authentication & DB status verification
+│   │   ├── auth.middleware.js          # JWT authentication
 │   │   ├── rateLimit.middleware.js     # Rate limiting middleware for public endpoints
 │   │   ├── role.middleware.js          # Role-based authorization middleware (RBAC)
 │   │   ├── validation.middleware.js    # express-validator result handler

@@ -95,17 +95,60 @@ const seedDatabase = async () => {
       createdDepts[deptData.code] = existingDept;
     }
 
-    // 2. Seed Controlled Demo Accounts (Admin & Officer) for Testing
+    // 2. Seed Controlled Demo Accounts (Citizen, Officer, Admin) for Testing
     const saltRounds = 10;
     
+    // Seed Citizen Account
+    const citizenEmail = 'citizen@example.com';
+    const citizenPass = 'Citizen123!';
+    let citizenUser = await User.findOne({ email: citizenEmail });
+    if (!citizenUser) {
+      const citizenPasswordHash = await bcrypt.hash(citizenPass, saltRounds);
+      citizenUser = await User.create({
+        name: 'John Citizen',
+        email: citizenEmail,
+        passwordHash: citizenPasswordHash,
+        phone: '9876543210',
+        role: 'CITIZEN',
+        departmentId: null,
+        ward: 'WARD-1',
+        isActive: true
+      });
+      console.log(`[Seed] Test CITIZEN Account Created: ${citizenEmail}`);
+    } else {
+      console.log(`[Seed] Test CITIZEN Account Already Exists: ${citizenEmail}`);
+    }
+
+    // Seed Officer Account
+    const officerEmail = 'officer@example.com';
+    const officerPass = 'Officer123!';
+    let officerUser = await User.findOne({ email: officerEmail });
+    if (!officerUser) {
+      const officerPasswordHash = await bcrypt.hash(officerPass, saltRounds);
+      const roadsDept = createdDepts['ROADS'];
+      officerUser = await User.create({
+        name: 'Jane Officer (Roads Dept)',
+        email: officerEmail,
+        passwordHash: officerPasswordHash,
+        phone: '8888888888',
+        role: 'OFFICER',
+        departmentId: roadsDept ? roadsDept._id : null,
+        ward: 'WARD-1',
+        isActive: true
+      });
+      console.log(`[Seed] Test OFFICER Account Created: ${officerEmail}`);
+    } else {
+      console.log(`[Seed] Test OFFICER Account Already Exists: ${officerEmail}`);
+    }
+
     // Seed Admin Account
-    const adminEmail = process.env.SEED_ADMIN_EMAIL || 'seed_admin@example.com';
-    const adminPass = process.env.SEED_ADMIN_PASSWORD || 'SeedAdmin123';
+    const adminEmail = 'admin@example.com';
+    const adminPass = 'Admin123!';
     let adminUser = await User.findOne({ email: adminEmail });
     if (!adminUser) {
       const adminPasswordHash = await bcrypt.hash(adminPass, saltRounds);
       adminUser = await User.create({
-        name: 'Demo System Administrator',
+        name: 'System Administrator',
         email: adminEmail,
         passwordHash: adminPasswordHash,
         phone: '9999999999',
@@ -114,31 +157,9 @@ const seedDatabase = async () => {
         ward: 'CENTRAL-HQ',
         isActive: true
       });
-      console.log(`[Seed] Demo ADMIN Account Created: ${adminEmail}`);
+      console.log(`[Seed] Test ADMIN Account Created: ${adminEmail}`);
     } else {
-      console.log(`[Seed] Demo ADMIN Account Already Exists: ${adminEmail}`);
-    }
-
-    // Seed Officer Account
-    const officerEmail = process.env.SEED_OFFICER_EMAIL || 'seed_officer@example.com';
-    const officerPass = process.env.SEED_OFFICER_PASSWORD || 'SeedOfficer123';
-    let officerUser = await User.findOne({ email: officerEmail });
-    if (!officerUser) {
-      const officerPasswordHash = await bcrypt.hash(officerPass, saltRounds);
-      const roadsDept = createdDepts['ROADS'];
-      officerUser = await User.create({
-        name: 'Demo Roads Officer',
-        email: officerEmail,
-        passwordHash: officerPasswordHash,
-        phone: '8888888888',
-        role: 'OFFICER',
-        departmentId: roadsDept ? roadsDept._id : null,
-        ward: 'WARD-01',
-        isActive: true
-      });
-      console.log(`[Seed] Demo OFFICER Account Created: ${officerEmail}`);
-    } else {
-      console.log(`[Seed] Demo OFFICER Account Already Exists: ${officerEmail}`);
+      console.log(`[Seed] Test ADMIN Account Already Exists: ${adminEmail}`);
     }
 
     console.log('[Seed] Database seed completed successfully.');
