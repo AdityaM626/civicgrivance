@@ -7,18 +7,73 @@ const autoSeedAccounts = async () => {
     const bcrypt = require('bcryptjs');
 
     // 1. Seed Departments if missing
-    let roadsDept = await Department.findOne({ code: 'ROADS' });
-    if (!roadsDept) {
-      roadsDept = await Department.create({
+    const departmentsData = [
+      {
         name: 'Roads & Infrastructure',
         code: 'ROADS',
         description: 'Handles municipal road repairs, potholes, and street infrastructure.',
         categories: [
           { name: 'Pothole Repair', slaHours: 48, isActive: true },
-          { name: 'Road Surface Damage', slaHours: 72, isActive: true }
+          { name: 'Road Surface Damage', slaHours: 72, isActive: true },
+          { name: 'Broken Footpath / Pavement', slaHours: 96, isActive: true }
         ],
         isActive: true
-      });
+      },
+      {
+        name: 'Water Supply',
+        code: 'WATER',
+        description: 'Manages municipal drinking water distribution, pipe leaks, and supply schedules.',
+        categories: [
+          { name: 'Water Leakage', slaHours: 24, isActive: true },
+          { name: 'Pipeline Leakage', slaHours: 24, isActive: true },
+          { name: 'No Water Supply', slaHours: 24, isActive: true },
+          { name: 'Contaminated Water', slaHours: 36, isActive: true }
+        ],
+        isActive: true
+      },
+      {
+        name: 'Waste Management',
+        code: 'WASTE',
+        description: 'Oversees garbage collection, waste disposal, and municipal bin maintenance.',
+        categories: [
+          { name: 'Uncollected Garbage', slaHours: 24, isActive: true },
+          { name: 'Overflowing Community Bin', slaHours: 24, isActive: true },
+          { name: 'Illegal Dumping', slaHours: 48, isActive: true }
+        ],
+        isActive: true
+      },
+      {
+        name: 'Sanitation & Sewage',
+        code: 'SANITATION',
+        description: 'Manages public sanitation, storm drains, and sewage line clearings.',
+        categories: [
+          { name: 'Drainage Overflow / Blockage', slaHours: 24, isActive: true },
+          { name: 'Open Manhole', slaHours: 12, isActive: true },
+          { name: 'Public Toilet Maintenance', slaHours: 48, isActive: true }
+        ],
+        isActive: true
+      },
+      {
+        name: 'Electrical & Street Lighting',
+        code: 'ELECTRICAL',
+        description: 'Maintains streetlights, electrical poles, and municipal lighting grids.',
+        categories: [
+          { name: 'Streetlight Not Working', slaHours: 36, isActive: true },
+          { name: 'Damaged Electrical Pole', slaHours: 24, isActive: true },
+          { name: 'Hanging Live Wire', slaHours: 6, isActive: true }
+        ],
+        isActive: true
+      }
+    ];
+
+    let roadsDept = null;
+    for (const d of departmentsData) {
+      let dept = await Department.findOne({ code: d.code });
+      if (!dept) {
+        dept = await Department.create(d);
+        console.log(`[Seed] Created department: ${d.name} (${d.code})`);
+      }
+      if (d.code === 'ROADS') roadsDept = dept;
     }
 
     const saltRounds = 10;

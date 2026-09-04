@@ -116,7 +116,18 @@
         <form id="form-file-complaint" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div class="space-y-2">
             <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Category</label>
-            <input type="text" id="complaint-category" placeholder="e.g. Water Leakage, Pothole, Streetlight" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+            <select id="complaint-category-select" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none mb-1">
+              <option value="">-- Select Pre-defined Category --</option>
+              <option value="Water Leakage">Water Leakage (Water Supply)</option>
+              <option value="Pipeline Leakage">Pipeline Leakage (Water Supply)</option>
+              <option value="No Water Supply">No Water Supply (Water Supply)</option>
+              <option value="Pothole Repair">Pothole Repair (Roads)</option>
+              <option value="Road Surface Damage">Road Surface Damage (Roads)</option>
+              <option value="Uncollected Garbage">Uncollected Garbage (Waste)</option>
+              <option value="Streetlight Not Working">Streetlight Not Working (Electrical)</option>
+              <option value="Drainage Overflow / Blockage">Drainage Overflow (Sanitation)</option>
+            </select>
+            <input type="text" id="complaint-category" placeholder="Or type custom category name..." class="w-full px-4 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
           </div>
 
           <div class="space-y-2">

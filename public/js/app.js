@@ -160,15 +160,36 @@ async function loadDepartments() {
 
 function populateDepartmentSelects() {
   const deptSelect = document.getElementById('complaint-dept-select');
-  if (!deptSelect) return;
-  
-  deptSelect.innerHTML = '<option value="">-- Auto Route by Category --</option>';
-  state.departments.forEach(d => {
-    const opt = document.createElement('option');
-    opt.value = d._id;
-    opt.textContent = `${d.name} (${d.code})`;
-    deptSelect.appendChild(opt);
-  });
+  const catSelect = document.getElementById('complaint-category-select');
+
+  if (deptSelect) {
+    deptSelect.innerHTML = '<option value="">-- Auto Route by Category --</option>';
+    state.departments.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d._id;
+      opt.textContent = `${d.name} (${d.code})`;
+      deptSelect.appendChild(opt);
+    });
+  }
+
+  if (catSelect && state.departments.length) {
+    catSelect.innerHTML = '<option value="">-- Select Pre-defined Category --</option>';
+    state.departments.forEach(d => {
+      if (d.categories && Array.isArray(d.categories)) {
+        const group = document.createElement('optgroup');
+        group.label = d.name;
+        d.categories.forEach(c => {
+          if (c.isActive) {
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.textContent = `${c.name} (${c.slaHours}h SLA)`;
+            group.appendChild(opt);
+          }
+        });
+        catSelect.appendChild(group);
+      }
+    });
+  }
 }
 
 // --- 1. Public Complaint Lookup ---
@@ -296,7 +317,13 @@ async function handleRegister(e) {
 // --- 3. Citizen Actions ---
 async function handleFileComplaint(e) {
   e.preventDefault();
-  const category = document.getElementById('complaint-category').value.trim();
+  const selectedCat = document.getElementById('complaint-category-select')?.value;
+  const inputCat = document.getElementById('complaint-category')?.value?.trim();
+  const category = selectedCat || inputCat;
+  
+  if (!category) {
+    return showToast('Please select or type a complaint category', 'error');
+  }
   const description = document.getElementById('complaint-desc').value.trim();
   const ward = document.getElementById('complaint-ward').value;
   const area = document.getElementById('complaint-area')?.value?.trim() || ward;
