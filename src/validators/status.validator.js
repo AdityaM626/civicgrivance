@@ -14,12 +14,16 @@ const updateStatusValidation = [
     .withMessage(`Status must be one of: ${statusEnum.join(', ')}`),
 
   body('remarks')
-    .notEmpty()
-    .withMessage('Remarks are required for status update')
+    .optional({ nullable: true, checkFalsy: true })
     .isString()
     .trim()
-    .isLength({ min: 3, max: 1000 })
-    .withMessage('Remarks must be between 3 and 1000 characters')
+    .isLength({ min: 2, max: 1000 })
+    .withMessage('Remarks must be between 2 and 1000 characters'),
+
+  body('note')
+    .optional({ nullable: true, checkFalsy: true })
+    .isString()
+    .trim()
 ];
 
 module.exports = {

@@ -540,17 +540,25 @@ function renderOfficerQueue(list, container) {
 
 async function updateComplaintStatus(complaintId, newStatus) {
   try {
+    const remarks = newStatus === 'IN_PROGRESS' 
+      ? 'Started field work and inspection for grievance resolution'
+      : `Status updated to ${newStatus}`;
+
     const res = await fetch(`${API_BASE}/complaints/${complaintId}/status`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ status: newStatus, note: `Status updated to ${newStatus}` })
+      body: JSON.stringify({ status: newStatus, remarks, note: remarks })
     });
     const data = await res.json();
     if (data.success) {
-      showToast(`Complaint status updated to ${newStatus}`, 'success');
+      showToast(`Status updated to ${newStatus}!`, 'success');
       loadOfficerQueue();
     } else {
-      showToast(data.message || 'Status update failed', 'error');
+      let errMsg = data.message || 'Status update failed';
+      if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+        errMsg = data.errors.map(err => err.msg || err.message).join(' | ');
+      }
+      showToast(errMsg, 'error');
     }
   } catch (err) {
     showToast('Failed to update status', 'error');

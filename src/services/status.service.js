@@ -6,7 +6,7 @@ const StatusHistory = require('../models/StatusHistory');
  * Explicitly defines permitted status state transitions
  */
 const TRANSITION_MATRIX = {
-  FILED: ['ASSIGNED'],
+  FILED: ['ASSIGNED', 'IN_PROGRESS'],
   ASSIGNED: ['IN_PROGRESS'],
   IN_PROGRESS: ['RESOLVED'],
   RESOLVED: ['CLOSED', 'REOPENED'],
@@ -25,18 +25,20 @@ const updateComplaintStatus = async (complaintId, newStatus, requestingUser, rem
     throw error;
   }
 
-  // Officer Authorization Guard: Must belong to same department AND be assigned to complaint
+  // Officer Authorization Guard: Must belong to same department
   if (requestingUser.role === 'OFFICER') {
     const deptMatch = requestingUser.departmentId && 
       complaint.departmentId.toString() === requestingUser.departmentId.toString();
 
-    const officerMatch = complaint.assignedOfficerId && 
-      complaint.assignedOfficerId.toString() === requestingUser.id.toString();
-
-    if (!deptMatch || !officerMatch) {
-      const error = new Error('You do not have permission to modify status for this complaint');
+    if (!deptMatch) {
+      const error = new Error('You do not have permission to modify status for complaints outside your department');
       error.statusCode = 403;
       throw error;
+    }
+
+    // Auto-assign officer to unassigned department complaint when starting work
+    if (!complaint.assignedOfficerId) {
+      complaint.assignedOfficerId = requestingUser.id;
     }
   }
 
