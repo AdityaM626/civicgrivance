@@ -436,17 +436,20 @@ async function loadOfficerQueue() {
   container.innerHTML = '<p class="text-center py-6 text-gray-500">Loading department queue...</p>';
 
   try {
-    const res = await fetch(`${API_BASE}/complaints/department/queue`, {
+    const res = await fetch(`${API_BASE}/officer/complaints`, {
       headers: getAuthHeaders()
     });
     const data = await res.json();
 
     if (data.success) {
-      state.officerQueue = data.data;
-      renderOfficerQueue(data.data, container);
+      const list = data.data?.complaints || data.data || [];
+      state.officerQueue = list;
+      renderOfficerQueue(list, container);
+    } else {
+      container.innerHTML = `<p class="text-red-500 p-4 text-center">${data.message || 'Failed to load queue'}</p>`;
     }
   } catch (err) {
-    container.innerHTML = `<p class="text-red-500 p-4">Error loading queue.</p>`;
+    container.innerHTML = `<p class="text-red-500 p-4 text-center">Error loading queue.</p>`;
   }
 }
 

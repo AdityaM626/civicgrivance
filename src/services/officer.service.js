@@ -11,10 +11,13 @@ const getAssignedComplaints = async (officerUser, queryParams = {}) => {
     throw error;
   }
 
-  // Enforce departmentId and assignedOfficerId from authenticated officer context
+  // Enforce departmentId from authenticated officer context
   const filter = {
     departmentId: officerUser.departmentId,
-    assignedOfficerId: officerUser.id
+    $or: [
+      { assignedOfficerId: officerUser.id },
+      { assignedOfficerId: null }
+    ]
   };
 
   if (queryParams.status) filter.status = queryParams.status;
