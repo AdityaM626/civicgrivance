@@ -1,0 +1,688 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-47a8-b901-23456789abcd",
+		"name": "P20 - Municipal Civic Complaint & Grievance System",
+		"description": "Postman Collection for Municipal Civic Complaint & Grievance Management System backend API.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"health"
+					]
+				},
+				"description": "Returns operational status and dynamic timestamp."
+			},
+			"response": []
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register Citizen",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"StrongPassword123\",\n  \"phone\": \"9876543210\",\n  \"ward\": \"WARD-12\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"StrongPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SLA",
+			"item": [
+				{
+					"name": "Admin - Manual SLA Check",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/sla/check",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"sla",
+								"check"
+							]
+						},
+						"description": "Manually triggers SLA breach monitoring and generates Level 1/2 escalation records (ADMIN only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Escalations",
+			"item": [
+				{
+					"name": "Admin - Get Escalations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/escalations?level=1&status=OPEN&page=1&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"escalations"
+							],
+							"query": [
+								{
+									"key": "level",
+									"value": "1"
+								},
+								{
+									"key": "status",
+									"value": "OPEN"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Retrieves escalation records with level and status filters (ADMIN only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - Get Escalation Detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/admin/escalations/{{escalationId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"escalations",
+								"{{escalationId}}"
+							]
+						},
+						"description": "Retrieves single escalation record details (ADMIN only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Resolution",
+			"item": [
+				{
+					"name": "Officer - Resolve Complaint With Proof",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{officerToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notes\": \"Pothole repaired with asphalt, levelled, and safety barriers removed.\",\n  \"photoUrls\": [\n    \"https://example.com/proof1.jpg\",\n    \"https://example.com/proof2.jpg\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/complaints/{{complaintId}}/resolve",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"{{complaintId}}",
+								"resolve"
+							]
+						},
+						"description": "Submits resolution proof notes & photos, marks complaint RESOLVED, and auto-closes open escalations (OFFICER only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Feedback & Reopen",
+			"item": [
+				{
+					"name": "Citizen - Submit Feedback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{citizenToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rating\": 5,\n  \"comment\": \"Prompt response and excellent work!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/complaints/{{complaintId}}/feedback",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"{{complaintId}}",
+								"feedback"
+							]
+						},
+						"description": "Submits rating (1-5) and optional comment for a resolved/closed complaint (CITIZEN only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Complaint Feedback",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{citizenToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/complaints/{{complaintId}}/feedback",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"{{complaintId}}",
+								"feedback"
+							]
+						},
+						"description": "Retrieves feedback document for a complaint."
+					},
+					"response": []
+				},
+				{
+					"name": "Citizen - Reopen Complaint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{citizenToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reopenReason\": \"Temporary bypass pipe burst within 2 hours, sewage still overflowing!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/complaints/{{complaintId}}/reopen",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"{{complaintId}}",
+								"reopen"
+							]
+						},
+						"description": "Reopens resolved/closed complaint while preserving original SLA due date (CITIZEN only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Citizen - Close Complaint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{citizenToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"remarks\": \"Resolution accepted and verified in person.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/complaints/{{complaintId}}/close",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"complaints",
+								"{{complaintId}}",
+								"close"
+							]
+						},
+						"description": "Explicitly closes resolved complaint (CITIZEN only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Public Complaint Tracking",
+			"item": [
+				{
+					"name": "Lookup Complaint by Reference Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/public/complaints/{{publicReferenceCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"public",
+								"complaints",
+								"{{publicReferenceCode}}"
+							]
+						},
+						"description": "Publicly tracks complaint status and timeline without JWT authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Reference Code Format",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/public/complaints/INVALID-REF-99",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"public",
+								"complaints",
+								"INVALID-REF-99"
+							]
+						},
+						"description": "Tests validation guard for invalid reference code format (400 Bad Request)."
+					},
+					"response": []
+				},
+				{
+					"name": "Unknown Reference Code",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/public/complaints/CIV-2026-999999",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"public",
+								"complaints",
+								"CIV-2026-999999"
+							]
+						},
+						"description": "Tests 404 response for non-existent reference code."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Reports & Analytics",
+			"item": [
+				{
+					"name": "Overview Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/overview?startDate=2026-09-01&endDate=2026-09-30",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "overview"],
+							"query": [
+								{ "key": "startDate", "value": "2026-09-01" },
+								{ "key": "endDate", "value": "2026-09-30" }
+							]
+						},
+						"description": "High-level dashboard summary metrics (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "Ward-Wise Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/wards",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "wards"]
+						},
+						"description": "Ward-wise complaint breakdown (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "Department Statistics Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/departments",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "departments"]
+						},
+						"description": "Department-wise complaint metrics (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "Category Distribution Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "categories"]
+						},
+						"description": "Category complaint counts (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "Status Breakdown Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "status"]
+						},
+						"description": "Status distribution metrics (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "Priority Distribution Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/priorities",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "priorities"]
+						},
+						"description": "Priority level breakdown (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "SLA Compliance Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/sla",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "sla"]
+						},
+						"description": "SLA compliance & overdue metrics (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "Escalation Statistics Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/escalations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "escalations"]
+						},
+						"description": "Escalation level & status statistics (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "Resolution & Closure Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/resolution",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "resolution"]
+						},
+						"description": "Resolution rates & average resolution times (ADMIN / OFFICER)."
+					},
+					"response": []
+				},
+				{
+					"name": "Complaint Trends Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/reports/trends?groupBy=monthly",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "reports", "trends"],
+							"query": [
+								{ "key": "groupBy", "value": "monthly" }
+							]
+						},
+						"description": "Complaint trends over time (daily, weekly, monthly) (ADMIN / OFFICER)."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5001",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "your_admin_jwt_token_here",
+			"type": "string"
+		},
+		{
+			"key": "officerToken",
+			"value": "your_officer_jwt_token_here",
+			"type": "string"
+		},
+		{
+			"key": "citizenToken",
+			"value": "your_citizen_jwt_token_here",
+			"type": "string"
+		},
+		{
+			"key": "complaintId",
+			"value": "your_complaint_id_here",
+			"type": "string"
+		},
+		{
+			"key": "publicReferenceCode",
+			"value": "CIV-2026-123456",
+			"type": "string"
+		},
+		{
+			"key": "escalationId",
+			"value": "your_escalation_id_here",
+			"type": "string"
+		}
+	]
+}
